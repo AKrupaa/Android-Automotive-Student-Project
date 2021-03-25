@@ -1,0 +1,12 @@
+<resources>
+    <string name="app_name">automotive</string>
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
+    <string name="media_url_mp3">https://storage.googleapis.com/exoplayer-test-media-0/play.mp3</string>
+    <string name="media_url_gandalf">https://youtu.be/G1IbRujko-A</string>
+    <string name="ble_not_supported">BLE not supported!</string>
+    <string name="ble_is_supported">BLE is supported!</string>
+    <string name="got_object_correctly">Got RxBLE object from View Model</string>
+    <string name="find_devices">Find devices</string>
+    <string name="stop_scan">Stop finding</string>
+</resources>
