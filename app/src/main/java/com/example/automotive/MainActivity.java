@@ -21,6 +21,7 @@ import com.example.automotive.ViewModels.MyViewModel;
 import com.google.android.material.tabs.TabLayout;
 import com.google.android.material.tabs.TabLayoutMediator;
 import com.polidea.rxandroidble2.RxBleClient;
+
 import androidx.lifecycle.ViewModelProvider;
 import androidx.appcompat.app.AppCompatActivity;
 
@@ -63,9 +64,16 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
 
-//        ViewModelProvider.Factory factory = new
-
         MyViewModel model = new ViewModelProvider(this).get(MyViewModel.class);
+
+        //        Turn on Bluetooth
+        Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
+        int REQUEST_ENABLE_BT = 1;
+        this.startActivityForResult(enableBtIntent, REQUEST_ENABLE_BT);
+//        create instance in ViewModel
+//        rxBleClient = RxBleClient.create(getApplicationContext());
+//        model.setRxBleClient(rxBleClient);
+        rxBleClient = SampleApplication.getRxBleClient(this);
 
         ButterKnife.bind(this);
 
@@ -132,12 +140,6 @@ public class MainActivity extends AppCompatActivity {
 //        MyApplicationContext
 //        rxBleClient = RxBleClient.create(this.getApplicationContext());
 
-//        Turn on Bluetooth
-        Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
-        int REQUEST_ENABLE_BT = 1;
-        this.startActivityForResult(enableBtIntent, REQUEST_ENABLE_BT);
-//        create instance in ViewModel
-        model.setRxBleClient(RxBleClient.create(this.getApplicationContext()));
 
 
 
@@ -213,6 +215,7 @@ public class MainActivity extends AppCompatActivity {
             }
         }
     }
+
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         if (requestCode == 1 && grantResults[0] == PackageManager.PERMISSION_GRANTED && grantResults[1] == PackageManager.PERMISSION_GRANTED) {

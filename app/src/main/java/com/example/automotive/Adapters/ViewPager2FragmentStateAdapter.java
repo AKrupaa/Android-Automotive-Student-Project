@@ -8,7 +8,7 @@ import androidx.fragment.app.FragmentManager;
 import androidx.lifecycle.Lifecycle;
 import androidx.viewpager2.adapter.FragmentStateAdapter;
 
-import com.example.automotive.ConnectionFragment;
+import com.example.automotive.Fragments.ConnectionFragment;
 import com.example.automotive.Fragments.DebuggingFragment;
 import com.example.automotive.Fragments.VideoFragment;
 

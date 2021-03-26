@@ -16,11 +16,6 @@ public class MyViewModel extends ViewModel {
 
     }
 
-//    public void setRxBleClient(MutableLiveData<RxBleClient> rxBleClient) {
-//        this.rxBleClient = rxBleClient;
-//    }
-
-
     public void setRxBleClient(RxBleClient item) {
         rxBleClient.setValue(item);
     }
