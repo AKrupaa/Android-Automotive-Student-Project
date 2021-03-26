@@ -5,6 +5,18 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
+    <TextView
+        android:id="@+id/ble_status_tv"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textAlignment="center"
+        app:layout_constraintBottom_toTopOf="@+id/ble_rv"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.0"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/find_devices_btn"
+        app:layout_constraintVertical_bias="0.363" />
+
     <Button
         android:id="@+id/find_devices_btn"
         android:layout_width="wrap_content"
@@ -20,11 +32,12 @@
         android:id="@+id/ble_rv"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_marginTop="50dp"
+        android:layout_marginTop="100dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
+        android:textAppearance="?attr/textAppearanceListItem"
         app:layout_constraintTop_toBottomOf="@+id/find_devices_btn"
-        tools:listitem="@layout/fragment_debug"/>
+        tools:listitem="@layout/fragment_connection"/>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -1,6 +1,7 @@
 package com.example.automotive.Fragments;
 
 import android.content.Context;
+import android.content.Intent;
 import android.os.Bundle;
 
 import androidx.annotation.NonNull;
@@ -15,13 +16,19 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.TextView;
+import android.widget.Toast;
 
 import com.example.automotive.Adapters.MyConnectionRecyclerViewAdapter;
 import com.example.automotive.R;
 import com.example.automotive.SampleApplication;
 import com.example.automotive.ViewModels.MyViewModel;
 import com.example.automotive.dummy.DummyContent;
+import com.google.android.exoplayer2.util.Log;
+import com.google.android.material.snackbar.Snackbar;
 import com.polidea.rxandroidble2.RxBleClient;
+import com.polidea.rxandroidble2.RxBleConnection;
+import com.polidea.rxandroidble2.RxBleDevice;
 import com.polidea.rxandroidble2.scan.ScanFilter;
 import com.polidea.rxandroidble2.scan.ScanResult;
 import com.polidea.rxandroidble2.scan.ScanSettings;
@@ -52,6 +59,11 @@ public class ConnectionFragment extends Fragment {
     Button findDevicesButton;
     @BindView(R.id.ble_rv)
     RecyclerView recyclerView;
+    private RxBleDevice bleDevice;
+    private Disposable stateDisposable;
+    private Disposable connectionDisposable;
+    @BindView(R.id.ble_status_tv)
+    TextView bluetoothStatusTextView;
 
     /**
      * Mandatory empty constructor for the fragment manager to instantiate the
@@ -99,6 +111,9 @@ public class ConnectionFragment extends Fragment {
         }
         myConnectionRecyclerViewAdapter = new MyConnectionRecyclerViewAdapter(scanResultList);
         recyclerView.setAdapter(myConnectionRecyclerViewAdapter);
+        myConnectionRecyclerViewAdapter.setClickListener((view1, position, scanResult) -> {
+            onAdapterItemClick(view1, position, scanResult);
+        });
 //        }
 
         myViewModel = new ViewModelProvider(getActivity()).get(MyViewModel.class);
@@ -122,7 +137,8 @@ public class ConnectionFragment extends Fragment {
     }
 
 
-    @Override public void onDestroyView() {
+    @Override
+    public void onDestroyView() {
         super.onDestroyView();
         unbinder.unbind();
     }
@@ -134,7 +150,6 @@ public class ConnectionFragment extends Fragment {
         } else {
             scanBleDevices();
         }
-
         updateButtonUIState();
     }
 
@@ -156,6 +171,7 @@ public class ConnectionFragment extends Fragment {
                         },
                         throwable -> {
                             // Handle an error here.
+                            Log.e("BLE search error", throwable.getStackTrace().toString());
                         }
                 );
     }
@@ -172,5 +188,80 @@ public class ConnectionFragment extends Fragment {
 
     private void updateButtonUIState() {
         findDevicesButton.setText(isScanning() ? R.string.stop_scan : R.string.find_devices);
+    }
+
+    private void onAdapterItemClick(View view, int position, ScanResult scanResult) {
+        final String macAddress = scanResult.getBleDevice().getMacAddress();
+//        final Intent intent = new Intent(this, DeviceActivity.class);
+//        intent.putExtra(DeviceActivity.EXTRA_MAC_ADDRESS, macAddress);
+//        startActivity(intent);
+        bleDevice = rxBleClient.getBleDevice(macAddress);
+        stateDisposable = bleDevice.observeConnectionStateChanges()
+                .subscribe(rxBleConnectionState -> {
+                    onConnectionStateChange(rxBleConnectionState);
+                });
+
+        if (isConnected()) {
+            triggerDisconnect();
+        } else {
+            connectionDisposable = bleDevice.establishConnection(true)
+                    .doFinally(this::dispose)
+                    .subscribe(this::onConnectionReceived, this::onConnectionFailure);
+        }
+    }
+
+    private void onConnectionStateChange(RxBleConnection.RxBleConnectionState newState) {
+//        Toast.makeText(getContext(), newState.toString(), Toast.LENGTH_SHORT).show();
+//        connectionStateView.setText(newState.toString());
+        bluetoothStatusTextView.setText(newState.toString());
+    }
+
+    private boolean isConnected() {
+        return bleDevice.getConnectionState() == RxBleConnection.RxBleConnectionState.CONNECTED;
+    }
+
+    private void triggerDisconnect() {
+
+        if (connectionDisposable != null) {
+            connectionDisposable.dispose();
+        }
+    }
+
+    private void onConnectionReceived(RxBleConnection connection) {
+        //noinspection ConstantConditions
+//        Snackbar.make(findViewById(android.R.id.content), "Connection received", Snackbar.LENGTH_SHORT).show();
+//        Toast.makeText(getContext(), "Connection received", Toast.LENGTH_SHORT).show();
+//        Toast.makeText(getContext(), "Connection received", Toast.LENGTH_SHORT).show();
+    }
+
+    private void onConnectionFailure(Throwable throwable) {
+        //noinspection ConstantConditions
+//        Snackbar.make(findViewById(android.R.id.content), "Connection error: " + throwable, Snackbar.LENGTH_SHORT).show();
+//        Toast.makeText(getContext(), "Connection error: " + throwable, Toast.LENGTH_SHORT).show();
+    }
+
+//    @Override
+//    protected void onPause() {
+//        super.onPause();
+//
+//        triggerDisconnect();
+//        mtuDisposable.clear();
+//    }
+
+
+    @Override
+    public void onPause() {
+        super.onPause();
+        triggerDisconnect();
+//        mtuDisposable.clear();
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+
+        if (stateDisposable != null) {
+            stateDisposable.dispose();
+        }
     }
 }
