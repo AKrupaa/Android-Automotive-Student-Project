@@ -9,11 +9,13 @@ import android.widget.TextView;
 
 import com.example.automotive.R;
 import com.example.automotive.dummy.DummyContent.DummyItem;
+import com.polidea.rxandroidble2.RxBleDevice;
 import com.polidea.rxandroidble2.scan.ScanResult;
 
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Locale;
 
 /**
  * {@link RecyclerView.Adapter} that can display a {@link ScanResult}.
@@ -40,8 +42,10 @@ public class MyConnectionRecyclerViewAdapter extends RecyclerView.Adapter<MyConn
     @Override
     public void onBindViewHolder(final ViewHolder holder, int position) {
         ScanResult scanResult = scanResultList.get(position);
-        holder.line1.setText(scanResult.getBleDevice().getName());
-        holder.line2.setText(scanResult.getBleDevice().getMacAddress());
+        final RxBleDevice bleDevice = scanResult.getBleDevice();
+        holder.line1.setText(String.format(Locale.getDefault(), "%s (%s)", bleDevice.getMacAddress(), bleDevice.getName()));
+        holder.line2.setText(String.format(Locale.getDefault(), "RSSI: %d", scanResult.getRssi()));
+//        holder.line2.setText(scanResult.getBleDevice().getMacAddress());
         holder.itemView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {

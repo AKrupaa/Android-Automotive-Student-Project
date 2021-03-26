@@ -32,6 +32,7 @@ import java.util.List;
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
+import butterknife.Unbinder;
 import io.reactivex.disposables.Disposable;
 
 /**
@@ -39,18 +40,18 @@ import io.reactivex.disposables.Disposable;
  */
 public class ConnectionFragment extends Fragment {
 
-    // TODO: Customize parameter argument names
     private static final String ARG_COLUMN_COUNT = "column-count";
-    // TODO: Customize parameters
     private int mColumnCount = 1;
     private List<ScanResult> scanResultList;
     private RxBleClient rxBleClient;
     private MyViewModel myViewModel;
     private Disposable scanDisposable;
     private MyConnectionRecyclerViewAdapter myConnectionRecyclerViewAdapter;
-
+    private Unbinder unbinder;
     @BindView(R.id.find_devices_btn)
     Button findDevicesButton;
+    @BindView(R.id.ble_rv)
+    RecyclerView recyclerView;
 
     /**
      * Mandatory empty constructor for the fragment manager to instantiate the
@@ -59,8 +60,6 @@ public class ConnectionFragment extends Fragment {
     public ConnectionFragment() {
     }
 
-    // TODO: Customize parameter initialization
-    @SuppressWarnings("unused")
     public static ConnectionFragment newInstance(int columnCount) {
         ConnectionFragment fragment = new ConnectionFragment();
         Bundle args = new Bundle();
@@ -84,12 +83,15 @@ public class ConnectionFragment extends Fragment {
         View view = inflater.inflate(R.layout.fragment_ble_control, container, false);
         scanResultList = new ArrayList<ScanResult>(0);
         // Set the adapter
-        ButterKnife.bind(view);
-        RecyclerView recyclerView = view.findViewById(R.id.ble_rv);
+//        ButterKnife.bind(view);
+        unbinder = ButterKnife.bind(this, view);
+//        RecyclerView recyclerView = view.findViewById(R.id.ble_rv);
 
 //        if (view instanceof RecyclerView) {
         Context context = view.getContext();
 //            RecyclerView recyclerView = (RecyclerView) view;
+        recyclerView.setHasFixedSize(true);
+        recyclerView.setItemAnimator(null);
         if (mColumnCount <= 1) {
             recyclerView.setLayoutManager(new LinearLayoutManager(context));
         } else {
@@ -114,9 +116,15 @@ public class ConnectionFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-
+//        scanBleDevices();
 // When done, just dispose.
 //        scanSubscription.dispose();
+    }
+
+
+    @Override public void onDestroyView() {
+        super.onDestroyView();
+        unbinder.unbind();
     }
 
     @OnClick(R.id.find_devices_btn)
@@ -133,7 +141,7 @@ public class ConnectionFragment extends Fragment {
     private void scanBleDevices() {
         scanDisposable = rxBleClient.scanBleDevices(
                 new ScanSettings.Builder()
-//                        .setScanMode(ScanSettings.SCAN_MODE_LOW_LATENCY) // change if needed
+                        .setScanMode(ScanSettings.SCAN_MODE_LOW_LATENCY) // change if needed
                         .setCallbackType(ScanSettings.CALLBACK_TYPE_ALL_MATCHES) // change if needed
                         .build(),
                 new ScanFilter.Builder()
