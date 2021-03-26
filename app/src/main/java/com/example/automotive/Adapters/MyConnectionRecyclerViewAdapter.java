@@ -11,6 +11,8 @@ import com.example.automotive.R;
 import com.example.automotive.dummy.DummyContent.DummyItem;
 import com.polidea.rxandroidble2.scan.ScanResult;
 
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 /**
@@ -48,7 +50,6 @@ public class MyConnectionRecyclerViewAdapter extends RecyclerView.Adapter<MyConn
                 }
             }
         });
-
     }
 
     // total number of rows
@@ -79,6 +80,32 @@ public class MyConnectionRecyclerViewAdapter extends RecyclerView.Adapter<MyConn
                     ", line2=" + line2 +
                     '}';
         }
+    }
+
+
+    private static final Comparator<ScanResult> SORTING_COMPARATOR = (lhs, rhs) ->
+            lhs.getBleDevice().getMacAddress().compareTo(rhs.getBleDevice().getMacAddress());
+
+    public void addScanResult(ScanResult bleScanResult) {
+        // Not the best way to ensure distinct devices, just for sake on the demo.
+
+        for (int i = 0; i < scanResultList.size(); i++) {
+
+            if (scanResultList.get(i).getBleDevice().equals(bleScanResult.getBleDevice())) {
+                scanResultList.set(i, bleScanResult);
+                notifyItemChanged(i);
+                return;
+            }
+        }
+
+        scanResultList.add(bleScanResult);
+        Collections.sort(scanResultList, SORTING_COMPARATOR);
+        notifyDataSetChanged();
+    }
+
+    public void clearScanResults() {
+        scanResultList.clear();
+        notifyDataSetChanged();
     }
 
     // allows clicks events to be caught
