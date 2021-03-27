@@ -11,19 +11,23 @@ import androidx.recyclerview.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 
 import com.example.automotive.Adapters.MyDebuggingRecyclerViewAdapter;
 import com.example.automotive.R;
 import com.example.automotive.dummy.DummyContent;
+
+import butterknife.BindView;
+import butterknife.ButterKnife;
+import butterknife.OnClick;
+import butterknife.Unbinder;
 
 /**
  * A fragment representing a list of Items.
  */
 public class DebuggingFragment extends Fragment {
 
-    // TODO: Customize parameter argument names
     private static final String ARG_COLUMN_COUNT = "column-count";
-    // TODO: Customize parameters
     private int mColumnCount = 1;
 
     /**
@@ -33,7 +37,6 @@ public class DebuggingFragment extends Fragment {
     public DebuggingFragment() {
     }
 
-    // TODO: Customize parameter initialization
     @SuppressWarnings("unused")
     public static DebuggingFragment newInstance(int columnCount) {
         DebuggingFragment fragment = new DebuggingFragment();
@@ -66,8 +69,11 @@ public class DebuggingFragment extends Fragment {
             } else {
                 recyclerView.setLayoutManager(new GridLayoutManager(context, mColumnCount));
             }
-            recyclerView.setAdapter(new MyDebuggingRecyclerViewAdapter(DummyContent.ITEMS));
+            MyDebuggingRecyclerViewAdapter myDebuggingRecyclerViewAdapter = new MyDebuggingRecyclerViewAdapter(DummyContent.ITEMS);
+            recyclerView.setAdapter(myDebuggingRecyclerViewAdapter);
         }
+
         return view;
     }
+
 }

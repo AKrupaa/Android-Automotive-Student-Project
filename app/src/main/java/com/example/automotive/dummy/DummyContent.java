@@ -8,8 +8,6 @@ import java.util.Map;
 /**
  * Helper class for providing sample content for user interfaces created by
  * Android template wizards.
- * <p>
- * TODO: Replace all uses of this class before publishing your app.
  */
 public class DummyContent {
 
@@ -35,6 +33,10 @@ public class DummyContent {
     private static void addItem(DummyItem item) {
         ITEMS.add(item);
         ITEM_MAP.put(item.id, item);
+    }
+
+    public static void addSingleItem(DummyItem item) {
+        ITEMS.add(item);
     }
 
     private static DummyItem createDummyItem(int position) {

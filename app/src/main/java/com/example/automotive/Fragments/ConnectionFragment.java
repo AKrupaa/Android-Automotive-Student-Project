@@ -1,5 +1,8 @@
 package com.example.automotive.Fragments;
 
+import android.bluetooth.BluetoothGattCharacteristic;
+import android.bluetooth.BluetoothGattDescriptor;
+import android.bluetooth.BluetoothGattService;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
@@ -29,9 +32,11 @@ import com.google.android.material.snackbar.Snackbar;
 import com.polidea.rxandroidble2.RxBleClient;
 import com.polidea.rxandroidble2.RxBleConnection;
 import com.polidea.rxandroidble2.RxBleDevice;
+import com.polidea.rxandroidble2.RxBleDeviceServices;
 import com.polidea.rxandroidble2.scan.ScanFilter;
 import com.polidea.rxandroidble2.scan.ScanResult;
 import com.polidea.rxandroidble2.scan.ScanSettings;
+import com.polidea.rxandroidble2.utils.StandardUUIDsParser;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -40,6 +45,7 @@ import butterknife.BindView;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
 import butterknife.Unbinder;
+import io.reactivex.Single;
 import io.reactivex.disposables.Disposable;
 
 /**
@@ -64,6 +70,7 @@ public class ConnectionFragment extends Fragment {
     private Disposable connectionDisposable;
     @BindView(R.id.ble_status_tv)
     TextView bluetoothStatusTextView;
+    private Disposable servicesSubscribe;
 
     /**
      * Mandatory empty constructor for the fragment manager to instantiate the
@@ -168,6 +175,7 @@ public class ConnectionFragment extends Fragment {
                         scanResult -> {
                             // Process scan result here.
                             myConnectionRecyclerViewAdapter.addScanResult(scanResult);
+                            // Check MyConnectionRecyclerViewAdapter -> onBindViewHolder();
                         },
                         throwable -> {
                             // Handle an error here.
@@ -195,18 +203,67 @@ public class ConnectionFragment extends Fragment {
 //        final Intent intent = new Intent(this, DeviceActivity.class);
 //        intent.putExtra(DeviceActivity.EXTRA_MAC_ADDRESS, macAddress);
 //        startActivity(intent);
+
+//        scanResult.getBleDevice().getBluetoothDevice();
+
         bleDevice = rxBleClient.getBleDevice(macAddress);
+
+        // share mac address of the device
+        myViewModel.setMacAddress(macAddress);
+        /*
+        Observing client state ---------------------------------------------------------------------
+         */
         stateDisposable = bleDevice.observeConnectionStateChanges()
                 .subscribe(rxBleConnectionState -> {
+//                    works every time until lost connection -> dispose()
                     onConnectionStateChange(rxBleConnectionState);
                 });
 
         if (isConnected()) {
             triggerDisconnect();
         } else {
+        /*
+        Observing client state ---------------------------------------------------------------------
+        Connection ---------------------------------------------------------------------
+         */
             connectionDisposable = bleDevice.establishConnection(true)
                     .doFinally(this::dispose)
-                    .subscribe(this::onConnectionReceived, this::onConnectionFailure);
+                    .subscribe(connection -> {
+                                onConnectionReceived(connection);
+                                servicesSubscribe = connection.discoverServices()
+                                        .doFinally(() -> {
+                                            ///////////////////////////////////////////
+                                            servicesSubscribe.dispose();
+                                        })
+                                        .subscribe((rxBleDeviceServices, throwable) -> {
+                                            List<BluetoothGattService> bluetoothGattServices = rxBleDeviceServices.getBluetoothGattServices();
+
+                                            myViewModel.setBluetoothGattServiceListFromBackgroundThread(bluetoothGattServices);
+
+//                                            for (int i = 0; i < bluetoothGattServices.size(); i++) {
+////                                        int a = bluetoothGattServices.get(i).getType();
+//
+//                                                String jakasNazwa = StandardUUIDsParser.getServiceName(bluetoothGattServices.get(i).getUuid());
+//                                                List<BluetoothGattCharacteristic> characteristics = bluetoothGattServices.get(i).getCharacteristics();
+//
+//                                                for (int j = 0; j < characteristics.size(); j++) {
+//                                                    String drugaNazwa = StandardUUIDsParser.getCharacteristicName(characteristics.get(j).getUuid());
+//
+//                                                    List<BluetoothGattDescriptor> descriptors = characteristics.get(j).getDescriptors();
+//
+//                                                    for (int k = 0; k < descriptors.size(); k++) {
+//
+//                                                        String trzeciaNazwa = StandardUUIDsParser.getDescriptorName(descriptors.get(k).getUuid());
+//                                                        Log.e("trzecia nazwa", trzeciaNazwa.toString());
+//
+//                                                    }
+//
+//                                                }
+//                                            }
+
+                                        });
+                            },
+                            throwable -> onConnectionFailure(throwable));
         }
     }
 
@@ -229,24 +286,19 @@ public class ConnectionFragment extends Fragment {
 
     private void onConnectionReceived(RxBleConnection connection) {
         //noinspection ConstantConditions
+//        connection.
+        Log.e("onConnectionFailure", "Connection received");
 //        Snackbar.make(findViewById(android.R.id.content), "Connection received", Snackbar.LENGTH_SHORT).show();
 //        Toast.makeText(getContext(), "Connection received", Toast.LENGTH_SHORT).show();
 //        Toast.makeText(getContext(), "Connection received", Toast.LENGTH_SHORT).show();
     }
 
     private void onConnectionFailure(Throwable throwable) {
+        Log.e("onConnectionFailure", throwable.getStackTrace().toString());
         //noinspection ConstantConditions
 //        Snackbar.make(findViewById(android.R.id.content), "Connection error: " + throwable, Snackbar.LENGTH_SHORT).show();
 //        Toast.makeText(getContext(), "Connection error: " + throwable, Toast.LENGTH_SHORT).show();
     }
-
-//    @Override
-//    protected void onPause() {
-//        super.onPause();
-//
-//        triggerDisconnect();
-//        mtuDisposable.clear();
-//    }
 
 
     @Override
@@ -262,6 +314,10 @@ public class ConnectionFragment extends Fragment {
 
         if (stateDisposable != null) {
             stateDisposable.dispose();
+        }
+
+        if (servicesSubscribe != null) {
+            servicesSubscribe.dispose();
         }
     }
 }

@@ -9,4 +9,9 @@
     <string name="got_object_correctly">Got RxBLE object from View Model</string>
     <string name="find_devices">Find devices</string>
     <string name="stop_scan">Stop finding</string>
+    <string name="turn_left">LEFT</string>
+    <string name="turn_right">RIGHT</string>
+    <string name="forward">FORWARD</string>
+    <string name="back">BACK</string>
+    <string name="manual">MANUAL</string>
 </resources>
