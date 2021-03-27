@@ -16,6 +16,7 @@ import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.example.automotive.Adapters.MyConnectionRecyclerViewAdapter;
 import com.example.automotive.R;
 import com.example.automotive.SampleApplication;
 import com.example.automotive.ViewModels.MyViewModel;
@@ -31,6 +32,7 @@ import com.polidea.rxandroidble2.RxBleDevice;
 import com.polidea.rxandroidble2.RxBleDeviceServices;
 import com.polidea.rxandroidble2.internal.util.UUIDUtil;
 import com.polidea.rxandroidble2.internal.util.UUIDUtil_Factory;
+import com.polidea.rxandroidble2.scan.ScanResult;
 import com.polidea.rxandroidble2.utils.StandardUUIDsParser;
 
 import java.util.List;
@@ -158,6 +160,11 @@ public class VideoFragment extends Fragment {
             this.bluetoothGattServiceList = item;
         });
 
+
+        myViewModel.getMacAddress().observe(getViewLifecycleOwner(), item -> {
+            // Update the UI.
+            this.macAddress = item;
+        });
 //        initializePlayer();
     }
 
@@ -278,6 +285,9 @@ public class VideoFragment extends Fragment {
     @OnClick(R.id.manual_btn)
     public void onManualButton() {
 
+        if(bleDevice == null)
+        bleDevice = rxBleClient.getBleDevice(this.macAddress);
+
         if (isConnected()) {
             triggerDisconnect();
         } else {
@@ -286,18 +296,10 @@ public class VideoFragment extends Fragment {
         Observing client state ---------------------------------------------------------------------
         Connection ---------------------------------------------------------------------
          */
-            myViewModel.getMacAddress().observe(getViewLifecycleOwner(), item -> {
-                // Update the UI.
-                this.macAddress = item;
-            });
-
             if (this.macAddress == null) {
                 Toast.makeText(getContext(), "Brak polaczenia", Toast.LENGTH_SHORT).show();
                 return;
             }
-
-
-            bleDevice = rxBleClient.getBleDevice(this.macAddress);
 
             if (this.bluetoothGattServiceList == null) {
                 myViewModel.getBluetoothGattServiceList().observe(getViewLifecycleOwner(), item -> {
@@ -312,12 +314,14 @@ public class VideoFragment extends Fragment {
                     .subscribe(
                             characteristicValue -> {
                                 // Characteristic value confirmed.
-                                DummyContent.DummyItem dummyItem = new DummyContent.DummyItem("1","CONTENT", "DETAILS");
+                                DummyContent.DummyItem dummyItem = new DummyContent.DummyItem("1","CONTENT", "JEST OK");
                                 DummyContent.addSingleItem(dummyItem);
                             },
                             throwable -> {
                                 // Handle an error here.
                                 Log.e("ERROR", "onManualButton() " + throwable.getStackTrace().toString());
+                                DummyContent.DummyItem dummyItem = new DummyContent.DummyItem("1","CONTENT", "ERROR");
+                                DummyContent.addSingleItem(dummyItem);
                             }
                     );
 
@@ -410,6 +414,5 @@ public class VideoFragment extends Fragment {
 //            handler.sendMessage(writeErrorMsg);
 //        }
 //    }
-
 
 }
