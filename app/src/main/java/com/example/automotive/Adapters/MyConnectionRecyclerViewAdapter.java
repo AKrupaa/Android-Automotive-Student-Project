@@ -2,6 +2,8 @@ package com.example.automotive.Adapters;
 
 import androidx.recyclerview.widget.RecyclerView;
 
+import android.bluetooth.BluetoothGattCharacteristic;
+import android.bluetooth.BluetoothGattService;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -10,6 +12,7 @@ import android.widget.TextView;
 import com.example.automotive.R;
 import com.example.automotive.dummy.DummyContent.DummyItem;
 import com.polidea.rxandroidble2.RxBleDevice;
+import com.polidea.rxandroidble2.RxBleDeviceServices;
 import com.polidea.rxandroidble2.scan.ScanResult;
 
 import java.util.Collections;
@@ -109,6 +112,22 @@ public class MyConnectionRecyclerViewAdapter extends RecyclerView.Adapter<MyConn
 
     public void clearScanResults() {
         scanResultList.clear();
+        notifyDataSetChanged();
+    }
+
+    public void swapScanResult(RxBleDeviceServices services) {
+        scanResultList.clear();
+
+//        for (BluetoothGattService service : services.getBluetoothGattServices()) {
+//            // Add service
+//            scanResultList.add(new AdapterItem(AdapterItem.SERVICE, getServiceType(service), service.getUuid()));
+//            final List<BluetoothGattCharacteristic> characteristics = service.getCharacteristics();
+//
+//            for (BluetoothGattCharacteristic characteristic : characteristics) {
+//                data.add(new AdapterItem(AdapterItem.CHARACTERISTIC, describeProperties(characteristic), characteristic.getUuid()));
+//            }
+//        }
+
         notifyDataSetChanged();
     }
 

@@ -16,6 +16,7 @@ import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -27,6 +28,7 @@ import com.example.automotive.Adapters.MyConnectionRecyclerViewAdapter;
 import com.example.automotive.R;
 import com.example.automotive.SampleApplication;
 import com.example.automotive.ViewModels.MyViewModel;
+import com.example.automotive.dummy.DiscoveryItem;
 import com.example.automotive.dummy.DummyContent;
 import com.google.android.exoplayer2.util.Log;
 import com.google.android.material.snackbar.Snackbar;
@@ -48,6 +50,7 @@ import butterknife.ButterKnife;
 import butterknife.OnClick;
 import butterknife.Unbinder;
 import io.reactivex.Single;
+import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.disposables.Disposable;
 
 /**
@@ -74,6 +77,7 @@ public class ConnectionFragment extends Fragment {
     private RxBleClient rxBleClient;
     private Disposable scanDisposable;
     private boolean hasClickedScan;
+    private final CompositeDisposable servicesDisposable = new CompositeDisposable();
 
     /**
      * Mandatory empty constructor for the fragment manager to instantiate the
@@ -216,6 +220,37 @@ public class ConnectionFragment extends Fragment {
         Toast.makeText(getContext(), macAddress1.getValue(), Toast.LENGTH_SHORT).show();
 
         scanDisposable.dispose();
+        myConnectionRecyclerViewAdapter.clearScanResults();
+
+        bleDevice = rxBleClient.getBleDevice(macAddress);
+
+        if(isConnected()) {
+            scanDisposable.dispose();
+        }
+
+        final Disposable disposable = bleDevice.establishConnection(false)
+                .flatMapSingle(RxBleConnection::discoverServices)
+                .take(1) // Disconnect automatically after discovery
+//                .observeOn(AndroidSchedulers.mainThread())
+                .doFinally(this::updateUI)
+                .subscribe(rxBleDeviceServices -> {
+//                            myViewModel.setBluetoothGattServiceList(bluetoothGattServices);
+                            final List<DiscoveryItem> discoveryItemList = new ArrayList<>(0);
+                            for (BluetoothGattService service : rxBleDeviceServices.getBluetoothGattServices()) {
+                                // Add service
+//                                myViewModel.se
+//                                data.add(new AdapterItem(AdapterItem.SERVICE, getServiceType(service), service.getUuid()));
+                                final List<BluetoothGattCharacteristic> characteristics = service.getCharacteristics();
+                                discoveryItemList.add(new DiscoveryItem(DiscoveryItem.SERVICE, getServiceType(service), service.getUuid()));
+                                for (BluetoothGattCharacteristic characteristic : characteristics) {
+                                    discoveryItemList.add(new DiscoveryItem(DiscoveryItem.CHARACTERISTIC, describeProperties(characteristic), characteristic.getUuid()));
+                                }
+                            }
+                            myViewModel.setDiscoveryItemListPost(discoveryItemList);
+                            System.out.println(discoveryItemList.toString());
+                        },
+                        this::onConnectionFailure);
+        servicesDisposable.add(disposable);
     }
 
 
@@ -236,6 +271,11 @@ public class ConnectionFragment extends Fragment {
         }
     }
 
+    private void updateUI() {
+//        Toast.makeText(getContext(), "Discovered services", Toast.LENGTH_SHORT).show();
+        Log.i("Discovered services", "Discovered services!");
+    }
+
     private void onConnectionReceived(RxBleConnection connection) {
         //noinspection ConstantConditions
 //        connection.
@@ -246,17 +286,46 @@ public class ConnectionFragment extends Fragment {
     }
 
     private void onConnectionFailure(Throwable throwable) {
-        Log.e("onConnectionFailure", throwable.getStackTrace().toString());
+//        Log.e("onConnectionFailure", throwable.getStackTrace());
+        throwable.printStackTrace();
+        System.out.println("\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\");
+        servicesDisposable.clear();
+        servicesDisposable.dispose();
         //noinspection ConstantConditions
 //        Snackbar.make(findViewById(android.R.id.content), "Connection error: " + throwable, Snackbar.LENGTH_SHORT).show();
 //        Toast.makeText(getContext(), "Connection error: " + throwable, Toast.LENGTH_SHORT).show();
     }
 
+    private String getServiceType(BluetoothGattService service) {
+        return service.getType() == BluetoothGattService.SERVICE_TYPE_PRIMARY ? "primary" : "secondary";
+    }
+
+    private boolean isCharacteristicNotifiable(BluetoothGattCharacteristic characteristic) {
+        return (characteristic.getProperties() & BluetoothGattCharacteristic.PROPERTY_NOTIFY) != 0;
+    }
+
+    private boolean isCharacteristicReadable(BluetoothGattCharacteristic characteristic) {
+        return ((characteristic.getProperties() & BluetoothGattCharacteristic.PROPERTY_READ) != 0);
+    }
+
+    private boolean isCharacteristicWriteable(BluetoothGattCharacteristic characteristic) {
+        return (characteristic.getProperties() & (BluetoothGattCharacteristic.PROPERTY_WRITE
+                | BluetoothGattCharacteristic.PROPERTY_WRITE_NO_RESPONSE)) != 0;
+    }
+
+    private String describeProperties(BluetoothGattCharacteristic characteristic) {
+        List<String> properties = new ArrayList<>();
+        if (isCharacteristicReadable(characteristic)) properties.add("Read");
+        if (isCharacteristicWriteable(characteristic)) properties.add("Write");
+        if (isCharacteristicNotifiable(characteristic)) properties.add("Notify");
+        return TextUtils.join(" ", properties);
+    }
 
     @Override
     public void onPause() {
         super.onPause();
         triggerDisconnect();
+        servicesDisposable.clear();
 //        mtuDisposable.clear();
     }
 

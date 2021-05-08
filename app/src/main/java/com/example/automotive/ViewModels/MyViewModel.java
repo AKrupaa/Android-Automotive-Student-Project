@@ -6,6 +6,7 @@ import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 
+import com.example.automotive.dummy.DiscoveryItem;
 import com.polidea.rxandroidble2.RxBleClient;
 
 import java.util.List;
@@ -14,9 +15,11 @@ import io.reactivex.disposables.Disposable;
 
 public class MyViewModel extends ViewModel {
     private MutableLiveData<RxBleClient> rxBleClient = new MutableLiveData<RxBleClient>();
-    private MutableLiveData<Disposable>  scanDisposable = new MutableLiveData<Disposable>();
-    private MutableLiveData<String>  macAddress = new MutableLiveData<String>();
-    private MutableLiveData<List<BluetoothGattService>>  bluetoothGattServiceList = new MutableLiveData<List<BluetoothGattService>>();
+    private MutableLiveData<Disposable> scanDisposable = new MutableLiveData<Disposable>();
+    private MutableLiveData<String> macAddress = new MutableLiveData<String>();
+    private MutableLiveData<List<BluetoothGattService>> bluetoothGattServiceList = new MutableLiveData<List<BluetoothGattService>>();
+    private MutableLiveData<List<DiscoveryItem>> discoveryItemList = new MutableLiveData<List<DiscoveryItem>>();
+
 
     public MyViewModel() {
 
@@ -56,5 +59,18 @@ public class MyViewModel extends ViewModel {
 
     public void setBluetoothGattServiceListFromBackgroundThread(List<BluetoothGattService> bluetoothGattServiceList) {
         this.bluetoothGattServiceList.postValue(bluetoothGattServiceList);
+    }
+
+    public MutableLiveData<List<DiscoveryItem>> getDiscoveryItemList() {
+        return discoveryItemList;
+    }
+
+    public void setDiscoveryItemList(List<DiscoveryItem> discoveryItemList) {
+        this.discoveryItemList.setValue(discoveryItemList);
+//        this.discoveryItemList.setValue(discoveryItemList.add());
+    }
+    public void setDiscoveryItemListPost(List<DiscoveryItem> discoveryItemList) {
+        this.discoveryItemList.postValue(discoveryItemList);
+//        this.discoveryItemList.setValue(discoveryItemList.add());
     }
 }
