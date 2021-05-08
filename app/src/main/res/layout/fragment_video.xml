@@ -14,66 +14,97 @@
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toRightOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.0" />
+        app:layout_constraintVertical_bias="0.0">
 
 
-    <Button
-        android:id="@+id/turn_left_btn"
-        android:layout_width="110dp"
-        android:layout_height="50dp"
-        android:text="@string/turn_left"
+    </com.google.android.exoplayer2.ui.PlayerView>
+
+    <io.github.controlwear.virtual.joystick.android.JoystickView
+        android:id="@+id/joystick"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:JV_backgroundColor="#009688"
+        app:JV_borderColor="#00796B"
+        app:JV_borderWidth="4dp"
+        app:JV_buttonColor="#FF6E40"
+        app:JV_buttonSizeRatio="15%"
+        app:JV_fixedCenter="false"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintHorizontal_bias="1.0"
-        app:layout_constraintLeft_toLeftOf="parent"
-        app:layout_constraintRight_toLeftOf="@id/forward_btn"
-        app:layout_constraintTop_toBottomOf="@id/forward_btn"
-        app:layout_constraintVertical_bias="0.0" />
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.827" />
 
-    <Button
-        android:id="@+id/turn_right_btn"
-        android:layout_width="110dp"
-        android:layout_height="50dp"
-        android:text="@string/turn_right"
-        app:layout_constraintBottom_toBottomOf="@id/turn_left_btn"
-        app:layout_constraintHorizontal_bias="0.0"
-        app:layout_constraintLeft_toRightOf="@id/forward_btn"
-        app:layout_constraintRight_toRightOf="parent"
-        app:layout_constraintTop_toTopOf="@id/turn_left_btn"
-        app:layout_constraintVertical_bias="0.0" />
+    <!--    <com.zerokol.views.joystickView.JoystickView-->
+<!--        android:id="@+id/joystickView"-->
+<!--        android:layout_width="220dp"-->
+<!--        android:layout_height="191dp"-->
+<!--        android:layout_marginTop="11dp"-->
+<!--        app:layout_constraintBottom_toBottomOf="parent"-->
+<!--        app:layout_constraintEnd_toEndOf="parent"-->
+<!--        app:layout_constraintStart_toStartOf="parent"-->
+<!--        app:layout_constraintTop_toBottomOf="@+id/video_view"-->
+<!--        app:layout_constraintVertical_bias="0.0" />-->
 
-    <Button
-        android:id="@+id/forward_btn"
-        android:layout_width="110dp"
-        android:layout_height="50dp"
-        android:text="@string/forward"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintLeft_toLeftOf="parent"
-        app:layout_constraintRight_toRightOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/video_view"
-        app:layout_constraintVertical_bias="0.16000003" />
+<!--    <Button-->
+<!--        android:id="@+id/turn_left_btn"-->
+<!--        android:layout_width="110dp"-->
+<!--        android:layout_height="50dp"-->
+<!--        android:text="@string/turn_left"-->
+<!--        app:layout_constraintBottom_toBottomOf="parent"-->
+<!--        app:layout_constraintHorizontal_bias="1.0"-->
+<!--        app:layout_constraintLeft_toLeftOf="parent"-->
+<!--        app:layout_constraintRight_toLeftOf="@id/forward_btn"-->
+<!--        app:layout_constraintTop_toBottomOf="@id/forward_btn"-->
+<!--        app:layout_constraintVertical_bias="0.0" />-->
 
-    <Button
-        android:id="@+id/back_btn"
-        android:layout_width="110dp"
-        android:layout_height="50dp"
-        android:text="@string/back"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintHorizontal_bias="0.0"
-        app:layout_constraintLeft_toRightOf="@id/turn_left_btn"
-        app:layout_constraintRight_toLeftOf="@id/turn_right_btn"
-        app:layout_constraintTop_toBottomOf="@id/turn_left_btn"
-        app:layout_constraintVertical_bias="0.0" />
+<!--    <Button-->
+<!--        android:id="@+id/turn_right_btn"-->
+<!--        android:layout_width="110dp"-->
+<!--        android:layout_height="50dp"-->
+<!--        android:text="@string/turn_right"-->
+<!--        app:layout_constraintBottom_toBottomOf="@id/turn_left_btn"-->
+<!--        app:layout_constraintHorizontal_bias="0.0"-->
+<!--        app:layout_constraintLeft_toRightOf="@id/forward_btn"-->
+<!--        app:layout_constraintRight_toRightOf="parent"-->
+<!--        app:layout_constraintTop_toTopOf="@id/turn_left_btn"-->
+<!--        app:layout_constraintVertical_bias="0.0" />-->
 
-    <Button
-        android:id="@+id/manual_btn"
-        android:layout_width="110dp"
-        android:layout_height="50dp"
-        android:text="@string/manual"
-        app:layout_constraintBottom_toBottomOf="@id/back_btn"
-        app:layout_constraintHorizontal_bias="0.0"
-        app:layout_constraintLeft_toLeftOf="@id/forward_btn"
-        app:layout_constraintRight_toRightOf="@id/forward_btn"
-        app:layout_constraintTop_toBottomOf="@id/forward_btn"
-        app:layout_constraintVertical_bias="0.0" />
+<!--    <Button-->
+<!--        android:id="@+id/forward_btn"-->
+<!--        android:layout_width="110dp"-->
+<!--        android:layout_height="50dp"-->
+<!--        android:text="@string/forward"-->
+<!--        app:layout_constraintBottom_toBottomOf="parent"-->
+<!--        app:layout_constraintLeft_toLeftOf="parent"-->
+<!--        app:layout_constraintRight_toRightOf="parent"-->
+<!--        app:layout_constraintTop_toBottomOf="@id/video_view"-->
+<!--        app:layout_constraintVertical_bias="0.16000003" />-->
+
+<!--    <Button-->
+<!--        android:id="@+id/back_btn"-->
+<!--        android:layout_width="110dp"-->
+<!--        android:layout_height="50dp"-->
+<!--        android:text="@string/back"-->
+<!--        app:layout_constraintBottom_toBottomOf="parent"-->
+<!--        app:layout_constraintHorizontal_bias="0.0"-->
+<!--        app:layout_constraintLeft_toRightOf="@id/turn_left_btn"-->
+<!--        app:layout_constraintRight_toLeftOf="@id/turn_right_btn"-->
+<!--        app:layout_constraintTop_toBottomOf="@id/turn_left_btn"-->
+<!--        app:layout_constraintVertical_bias="0.0" />-->
+
+<!--    <Button-->
+<!--        android:id="@+id/manual_btn"-->
+<!--        android:layout_width="110dp"-->
+<!--        android:layout_height="50dp"-->
+<!--        android:text="@string/manual"-->
+<!--        app:layout_constraintBottom_toBottomOf="@id/back_btn"-->
+<!--        app:layout_constraintHorizontal_bias="0.0"-->
+<!--        app:layout_constraintLeft_toLeftOf="@id/forward_btn"-->
+<!--        app:layout_constraintRight_toRightOf="@id/forward_btn"-->
+<!--        app:layout_constraintTop_toBottomOf="@id/forward_btn"-->
+<!--        app:layout_constraintVertical_bias="0.0" />-->
+
 
 </androidx.constraintlayout.widget.ConstraintLayout>
+

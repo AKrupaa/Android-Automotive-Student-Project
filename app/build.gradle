@@ -36,6 +36,7 @@ dependencies {
     implementation 'androidx.legacy:legacy-support-v4:1.0.0'
     implementation 'androidx.recyclerview:recyclerview:1.1.0'
     implementation project(path: ':exoplayer-extension-rtmp')
+    implementation project(path: ':joystickView')
     testImplementation 'junit:junit:4.+'
     androidTestImplementation 'androidx.test.ext:junit:1.1.1'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.2.0'
@@ -57,6 +58,8 @@ dependencies {
 
 //     ViewModel
     implementation "androidx.lifecycle:lifecycle-viewmodel:$lifecycle_version"
-
+// https://mvnrepository.com/artifact/io.github.controlwear/virtualjoystick
+//    implementation group: 'io.github.controlwear', name: 'virtualjoystick', version: '1.10.1'
+    compile 'io.github.controlwear:virtualjoystick:1.10.1'
     compile 'io.reactivex.rxjava2:rxjava:2.1.0'
 }

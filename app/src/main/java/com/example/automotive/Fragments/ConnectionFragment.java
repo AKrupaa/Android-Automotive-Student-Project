@@ -10,6 +10,7 @@ import android.os.Bundle;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
+import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -39,6 +40,7 @@ import com.polidea.rxandroidble2.scan.ScanSettings;
 import com.polidea.rxandroidble2.utils.StandardUUIDsParser;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import butterknife.BindView;
@@ -56,9 +58,7 @@ public class ConnectionFragment extends Fragment {
     private static final String ARG_COLUMN_COUNT = "column-count";
     private int mColumnCount = 1;
     private List<ScanResult> scanResultList;
-    private RxBleClient rxBleClient;
     private MyViewModel myViewModel;
-    private Disposable scanDisposable;
     private MyConnectionRecyclerViewAdapter myConnectionRecyclerViewAdapter;
     private Unbinder unbinder;
     @BindView(R.id.find_devices_btn)
@@ -71,6 +71,9 @@ public class ConnectionFragment extends Fragment {
     @BindView(R.id.ble_status_tv)
     TextView bluetoothStatusTextView;
     private Disposable servicesSubscribe;
+    private RxBleClient rxBleClient;
+    private Disposable scanDisposable;
+    private boolean hasClickedScan;
 
     /**
      * Mandatory empty constructor for the fragment manager to instantiate the
@@ -130,7 +133,7 @@ public class ConnectionFragment extends Fragment {
 //            this.rxBleClient = client;
 //        });
 
-        this.rxBleClient = SampleApplication.getRxBleClient(getContext());
+        this.rxBleClient = SampleApplication.getRxBleClient(view.getContext());
         return view;
     }
 
@@ -167,19 +170,16 @@ public class ConnectionFragment extends Fragment {
                         .setCallbackType(ScanSettings.CALLBACK_TYPE_ALL_MATCHES) // change if needed
                         .build(),
                 new ScanFilter.Builder()
-                        .build()
-                // add filters if needed
-        )
-                .doFinally(() -> dispose())
+                        .build())
+                .doFinally(this::dispose)
                 .subscribe(
                         scanResult -> {
                             // Process scan result here.
                             myConnectionRecyclerViewAdapter.addScanResult(scanResult);
-                            // Check MyConnectionRecyclerViewAdapter -> onBindViewHolder();
                         },
                         throwable -> {
                             // Handle an error here.
-                            Log.e("BLE search error", throwable.getStackTrace().toString());
+                            android.util.Log.e("BLE search error", Arrays.toString(throwable.getStackTrace()));
                         }
                 );
     }
@@ -200,72 +200,24 @@ public class ConnectionFragment extends Fragment {
 
     private void onAdapterItemClick(View view, int position, ScanResult scanResult) {
         final String macAddress = scanResult.getBleDevice().getMacAddress();
+
+
 //        final Intent intent = new Intent(this, DeviceActivity.class);
 //        intent.putExtra(DeviceActivity.EXTRA_MAC_ADDRESS, macAddress);
 //        startActivity(intent);
 
 //        scanResult.getBleDevice().getBluetoothDevice();
 
-        bleDevice = rxBleClient.getBleDevice(macAddress);
+//        bleDevice = rxBleClient.getBleDevice(macAddress);
 
         // share mac address of the device
         myViewModel.setMacAddress(macAddress);
-        /*
-        Observing client state ---------------------------------------------------------------------
-         */
-        stateDisposable = bleDevice.observeConnectionStateChanges()
-                .subscribe(rxBleConnectionState -> {
-//                    works every time until lost connection -> dispose()
-                    onConnectionStateChange(rxBleConnectionState);
-                });
+        MutableLiveData<String> macAddress1 = myViewModel.getMacAddress();
+        Toast.makeText(getContext(), macAddress1.getValue(), Toast.LENGTH_SHORT).show();
 
-        if (isConnected()) {
-            triggerDisconnect();
-        } else {
-        /*
-        Observing client state ---------------------------------------------------------------------
-        Connection ---------------------------------------------------------------------
-         */
-            connectionDisposable = bleDevice.establishConnection(true)
-                    .doFinally(this::dispose)
-                    .subscribe(connection -> {
-                                onConnectionReceived(connection);
-                                servicesSubscribe = connection.discoverServices()
-                                        .doFinally(() -> {
-                                            ///////////////////////////////////////////
-                                            servicesSubscribe.dispose();
-                                        })
-                                        .subscribe((rxBleDeviceServices, throwable) -> {
-                                            List<BluetoothGattService> bluetoothGattServices = rxBleDeviceServices.getBluetoothGattServices();
-
-                                            myViewModel.setBluetoothGattServiceListFromBackgroundThread(bluetoothGattServices);
-
-//                                            for (int i = 0; i < bluetoothGattServices.size(); i++) {
-////                                        int a = bluetoothGattServices.get(i).getType();
-//
-//                                                String jakasNazwa = StandardUUIDsParser.getServiceName(bluetoothGattServices.get(i).getUuid());
-//                                                List<BluetoothGattCharacteristic> characteristics = bluetoothGattServices.get(i).getCharacteristics();
-//
-//                                                for (int j = 0; j < characteristics.size(); j++) {
-//                                                    String drugaNazwa = StandardUUIDsParser.getCharacteristicName(characteristics.get(j).getUuid());
-//
-//                                                    List<BluetoothGattDescriptor> descriptors = characteristics.get(j).getDescriptors();
-//
-//                                                    for (int k = 0; k < descriptors.size(); k++) {
-//
-//                                                        String trzeciaNazwa = StandardUUIDsParser.getDescriptorName(descriptors.get(k).getUuid());
-//                                                        Log.e("trzecia nazwa", trzeciaNazwa.toString());
-//
-//                                                    }
-//
-//                                                }
-//                                            }
-
-                                        });
-                            },
-                            throwable -> onConnectionFailure(throwable));
-        }
+        scanDisposable.dispose();
     }
+
 
     private void onConnectionStateChange(RxBleConnection.RxBleConnectionState newState) {
 //        Toast.makeText(getContext(), newState.toString(), Toast.LENGTH_SHORT).show();

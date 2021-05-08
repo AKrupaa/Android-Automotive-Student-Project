@@ -17,7 +17,9 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.example.automotive.Adapters.MyConnectionRecyclerViewAdapter;
+import com.example.automotive.EngineValuesPWM;
 import com.example.automotive.R;
+import com.example.automotive.RxJavaBLE.RxJavaBLE;
 import com.example.automotive.SampleApplication;
 import com.example.automotive.ViewModels.MyViewModel;
 import com.example.automotive.dummy.DummyContent;
@@ -35,15 +37,22 @@ import com.polidea.rxandroidble2.internal.util.UUIDUtil_Factory;
 import com.polidea.rxandroidble2.scan.ScanResult;
 import com.polidea.rxandroidble2.utils.StandardUUIDsParser;
 
+import io.github.controlwear.virtual.joystick.android.JoystickView;
+
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
 import butterknife.Unbinder;
+import io.reactivex.Observable;
 import io.reactivex.Single;
 import io.reactivex.disposables.Disposable;
+
+import static java.lang.Math.cos;
+import static java.lang.Math.sin;
 
 /**
  * A simple {@link Fragment} subclass.
@@ -51,7 +60,7 @@ import io.reactivex.disposables.Disposable;
  * create an instance of this fragment.
  */
 public class VideoFragment extends Fragment {
-
+    private static final String MAC_ADDRESS = "EA:A5:34:E6:28:2E";
     // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
     private static final String ARG_PARAM1 = "param1";
     private static final String ARG_PARAM2 = "param2";
@@ -62,6 +71,7 @@ public class VideoFragment extends Fragment {
     // 0000xxxx-0000-1000-8000-00805F9B34FB
     public static final String UUID_SERVICE = "00001234-0000-1000-8000-00805F9B34FB";
     public static final String UUID_CHARACTERISTIC_WRITE = "00001234-0000-1000-8000-00805F9B34FB";
+
 
     private Uri URI;
     private String mParam1;
@@ -75,16 +85,12 @@ public class VideoFragment extends Fragment {
     private SimpleExoPlayer player;
 
     private Unbinder unbinder;
-    @BindView(R.id.forward_btn)
-    Button forwardButton;
-    @BindView(R.id.back_btn)
-    Button backwardButton;
-    @BindView(R.id.turn_left_btn)
-    Button turnLeftButton;
-    @BindView(R.id.turn_right_btn)
-    Button turnRightButton;
-    @BindView(R.id.manual_btn)
-    Button manualButton;
+    // Importing also other views
+//    @BindView(R.id.joystick)
+    JoystickView joystick;
+
+//    @BindView(R.id.manual_btn)
+//    Button manualButton;
 
     MyViewModel myViewModel;
     private String macAddress;
@@ -93,9 +99,11 @@ public class VideoFragment extends Fragment {
     private RxBleDevice bleDevice;
 
     private Disposable connectionDisposable;
+    private Observable<RxBleConnection> rxBleConnectionObservable;
 
     List<BluetoothGattService> bluetoothGattServiceList;
-
+    RxJavaBLE rxJavaBLE;
+    Disposable subscribe;
     String BASE_UUID = "00000000-0000-1000-8000-00805F9B34FB";
 
     public VideoFragment() {
@@ -108,13 +116,8 @@ public class VideoFragment extends Fragment {
      *
      * @return A new instance of fragment VideoFragment.
      */
-    // TODO: Rename and change types and number of parameters
-    public static VideoFragment newInstance(/*String param1, String param2*/) {
+    public static VideoFragment newInstance() {
         VideoFragment fragment = new VideoFragment();
-//        Bundle args = new Bundle();
-//        args.putString(ARG_PARAM1, param1);
-//        args.putString(ARG_PARAM2, param2);
-//        fragment.setArguments(args);
         return fragment;
     }
 
@@ -141,7 +144,28 @@ public class VideoFragment extends Fragment {
         View view = inflater.inflate(R.layout.fragment_video, container, false);
         unbinder = ButterKnife.bind(this, view);
         myViewModel = new ViewModelProvider(getActivity()).get(MyViewModel.class);
-        this.rxBleClient = SampleApplication.getRxBleClient(getContext());
+        rxBleClient = SampleApplication.getRxBleClient(getActivity());
+//        rxJavaBLE = new RxJavaBLE(rxBleClient);
+
+//        rxJavaBLE.setMAC(MAC_ADDRESS);
+
+//        connectionDisposable = rxJavaBLE.prepareConnectionObservable().subscribe(rxBleConnection -> {
+//            Log.i("connected", "connected");
+//        });
+
+
+//        rxBleConnectionObservable = rxJavaBLE.prepareConnectionObservable();
+
+
+
+//        this.rxBleClient = SampleApplication.getRxBleClient(getActivity());
+
+//        this.rxBleClient.getBleDevice()
+
+//        this.rxBleClient = SampleApplication.getRxBleClient(getContext());
+//        this.rxBleClient =
+//        Set<RxBleDevice> value = this.rxBleClient.getBondedDevices();
+        joystick = (JoystickView) view.findViewById(R.id.joystick);
         return view;
     }
 
@@ -156,15 +180,38 @@ public class VideoFragment extends Fragment {
 //        https://developer.android.com/codelabs/exoplayer-intro#2
         playerView = view.findViewById(R.id.video_view);
 
-        myViewModel.getBluetoothGattServiceList().observe(getViewLifecycleOwner(), item -> {
-            this.bluetoothGattServiceList = item;
-        });
+
+//        RxJavaBLE rxJavaBLE = new RxJavaBLE(bleDevice, MAC_ADDRESS);
+//        rxBleConnectionObservable = rxJavaBLE.prepareConnectionObservable();
+
+        joystick.setOnMoveListener(new JoystickView.OnMoveListener() {
+            @Override
+            public void onMove(int angle, int strength) {
+                double nJoyX = strength * cos(angle * Math.PI / 180);
+                double nJoyY = strength * sin(angle * Math.PI / 180);
+                Log.i("RUCH:", String.valueOf(nJoyX) + "____" + String.valueOf(nJoyY));
+
+                EngineValuesPWM engineValuesPWM = new EngineValuesPWM(nJoyX, nJoyY);
+                engineValuesPWM.calulcate();
+
+                double engineLeft = engineValuesPWM.getnMotMixL();
+                double engineRight = engineValuesPWM.getnMotMixR();
+
+//                if (bleDevice == null)
+//                    bleDevice = rxBleClient.getBleDevice(MAC_ADDRESS);
+
+//                connectionDisposable = bleDevice.establishConnection(false).subscribe(rxBleConnection -> {
+//                   Log.i("connected", "connected");
+//                });
+
+//                if (rxJavaBLE.isConnected()) {
+//                    rxJavaBLE.sendData("haha".toCharArray());
+//                }
 
 
-        myViewModel.getMacAddress().observe(getViewLifecycleOwner(), item -> {
-            // Update the UI.
-            this.macAddress = item;
-        });
+            }
+        }, 100);
+
 //        initializePlayer();
     }
 
@@ -282,111 +329,6 @@ public class VideoFragment extends Fragment {
         }
     }
 
-    @OnClick(R.id.manual_btn)
-    public void onManualButton() {
-
-        if(bleDevice == null)
-        bleDevice = rxBleClient.getBleDevice(this.macAddress);
-
-        if (isConnected()) {
-            triggerDisconnect();
-        } else {
-            // connect -> and send value, leave connected;
-        /*
-        Observing client state ---------------------------------------------------------------------
-        Connection ---------------------------------------------------------------------
-         */
-            if (this.macAddress == null) {
-                Toast.makeText(getContext(), "Brak polaczenia", Toast.LENGTH_SHORT).show();
-                return;
-            }
-
-            if (this.bluetoothGattServiceList == null) {
-                myViewModel.getBluetoothGattServiceList().observe(getViewLifecycleOwner(), item -> {
-                    this.bluetoothGattServiceList = item;
-                });
-            }
-
-            byte[] bytesToWrite = "MANUAL".getBytes();
-            connectionDisposable = bleDevice.establishConnection(false)
-                    .flatMapSingle(rxBleConnection -> rxBleConnection.writeCharacteristic(UUID.fromString(UUID_CHARACTERISTIC_WRITE), bytesToWrite))
-                    .doFinally(() -> connectionDisposable.dispose())
-                    .subscribe(
-                            characteristicValue -> {
-                                // Characteristic value confirmed.
-                                DummyContent.DummyItem dummyItem = new DummyContent.DummyItem("1","CONTENT", "JEST OK");
-                                DummyContent.addSingleItem(dummyItem);
-                            },
-                            throwable -> {
-                                // Handle an error here.
-                                Log.e("ERROR", "onManualButton() " + throwable.getStackTrace().toString());
-                                DummyContent.DummyItem dummyItem = new DummyContent.DummyItem("1","CONTENT", "ERROR");
-                                DummyContent.addSingleItem(dummyItem);
-                            }
-                    );
-
-//            connectionDisposable = bleDevice.establishConnection(false)
-//                    .subscribe(rxBleConnection -> {
-//                                Log.i("USTANOWIONE POLACZENIE", "POLACZONO!");
-////                                Single<RxBleDeviceServices> rxBleDeviceServicesSingle = rxBleConnection.discoverServices();
-////                                rxBleDeviceServicesSingle.
-////                        RxBleDeviceServices rxBleDeviceServices = rxBleConnection.discoverServices()
-//                            },
-//                            throwable -> {
-//                                Log.e("ERROR", "onManualButton() " + throwable.toString());
-//                            });
-
-
-//            String UUID = "181C";
-//            java.util.UUID uuid = new UUID();
-
-//            String standardUUIDsParser = StandardUUIDsParser.getCharacteristicName();
-
-
-//            bleDevice.establishConnection(false)
-//                    .flatMapSingle(rxBleConnection -> rxBleConnection.writeCharacteristic(CHARACTERISTIC, bytesToWrite))
-//                    .subscribe(
-//                            characteristicValue -> {
-//                                // Characteristic value confirmed.
-//                            },
-//                            throwable -> {
-//                                // Handle an error here.
-//                            }
-//                    );
-
-        }
-//        device.establishConnection(false)
-//                .flatMapSingle(rxBleConnection -> rxBleConnection.writeCharacteristic(characteristicUUID, bytesToWrite))
-//                .subscribe(
-//                        characteristicValue -> {
-//                            // Characteristic value confirmed.
-//                        },
-//                        throwable -> {
-//                            // Handle an error here.
-//                        }
-//                );
-
-    }
-
-    @OnClick(R.id.forward_btn)
-    public void onForwardButton() {
-
-    }
-
-    @OnClick(R.id.back_btn)
-    public void onBackwardButton() {
-
-    }
-
-    @OnClick(R.id.turn_left_btn)
-    public void onTurnLeftButton() {
-
-    }
-
-    @OnClick(R.id.turn_right_btn)
-    public void onTurnRightButton() {
-
-    }
 
     private boolean isConnected() {
         return bleDevice.getConnectionState() == RxBleConnection.RxBleConnectionState.CONNECTED;
@@ -398,21 +340,4 @@ public class VideoFragment extends Fragment {
             connectionDisposable.dispose();
         }
     }
-
-//    public void write(byte[] bytes) {
-//        try {
-//            mmOutStream.write(bytes);
-//            Message writtenMsg = handler.obtainMessage(MessageConstants.MESSAGE_WRITE, -1, -1, bytes);
-//            writtenMsg.sendToTarget();
-//        } catch (IOException e) {
-//            Log.e(TAG, "Error occurred when sending data", e);
-//            Send a failure message back to the activity.
-//            Message writeErrorMsg = handler.obtainMessage(MessageConstants.MESSAGE_TOAST);
-//            Bundle bundle = new Bundle();
-//            bundle.putString("toast", "Couldn't send data to the other device");
-//            writeErrorMsg.setData(bundle);
-//            handler.sendMessage(writeErrorMsg);
-//        }
-//    }
-
 }

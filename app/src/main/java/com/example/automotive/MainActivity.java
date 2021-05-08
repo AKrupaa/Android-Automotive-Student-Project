@@ -21,6 +21,7 @@ import com.example.automotive.ViewModels.MyViewModel;
 import com.google.android.material.tabs.TabLayout;
 import com.google.android.material.tabs.TabLayoutMediator;
 import com.polidea.rxandroidble2.RxBleClient;
+import com.polidea.rxandroidble2.RxBleDevice;
 
 import androidx.lifecycle.ViewModelProvider;
 import androidx.appcompat.app.AppCompatActivity;
@@ -28,12 +29,12 @@ import androidx.appcompat.app.AppCompatActivity;
 import butterknife.ButterKnife;
 
 public class MainActivity extends AppCompatActivity {
-
+    private static final String MAC_ADDRESS = "EA:A5:34:E6:28:2E";
     ViewPager2 viewPager2;
     ViewPager2FragmentStateAdapter fragmentStateAdapter;
     TabLayout tabLayout;
-
-    private RxBleClient rxBleClient;
+//    RxBleDevice device = rxBleClient.getBleDevice(macAddress);
+//    SampleApplication sampleApplication = new SampleApplication(getApplicationContext());
 
 
     //   --------------------------------------------------- przechowywanie info przy ROTACJI ---------------------------------------------------
@@ -73,7 +74,7 @@ public class MainActivity extends AppCompatActivity {
 //        create instance in ViewModel
 //        rxBleClient = RxBleClient.create(getApplicationContext());
 //        model.setRxBleClient(rxBleClient);
-        rxBleClient = SampleApplication.getRxBleClient(this);
+//        rxBleClient = SampleApplication.getRxBleClient(this);
 
         ButterKnife.bind(this);
 
@@ -96,6 +97,7 @@ public class MainActivity extends AppCompatActivity {
 //        FRAGMENT ADAPTER
         fragmentStateAdapter = new ViewPager2FragmentStateAdapter(getSupportFragmentManager(), getLifecycle());
         viewPager2 = findViewById(R.id.pager);
+        viewPager2.setUserInputEnabled(false);
         viewPager2.setAdapter(fragmentStateAdapter);
 
         // TOP BAR
@@ -118,6 +120,9 @@ public class MainActivity extends AppCompatActivity {
         }
 
 
+//        rxBleClient.getBleDevice(MAC_ADDRESS).getBluetoothDevice().createBond();
+//        rxBleClient.getBleDevice(MAC_ADDRESS).establishConnection(false);
+
 ////        https://developer.android.com/guide/topics/connectivity/use-ble
 //        // Initializes Bluetooth adapter.
 //        final BluetoothManager bluetoothManager = getSystemService(BluetoothManager.class);
@@ -139,8 +144,6 @@ public class MainActivity extends AppCompatActivity {
 
 //        MyApplicationContext
 //        rxBleClient = RxBleClient.create(this.getApplicationContext());
-
-
 
 
     }
@@ -181,28 +184,6 @@ public class MainActivity extends AppCompatActivity {
     protected void onDestroy() {
         super.onDestroy();
     }
-
-//    private void scanLeDevice() {
-//        if(bluetoothLeScanner != null) {
-//            if (!scanning) {
-//                // Stops scanning after a pre-defined scan period.
-//                handler.postDelayed(new Runnable() {
-//                    @Override
-//                    public void run() {
-//                        scanning = false;
-//                        bluetoothLeScanner.stopScan(leScanCallback);
-//                    }
-//                }, SCAN_PERIOD);
-//
-//                scanning = true;
-//                bluetoothLeScanner.startScan(leScanCallback);
-//            } else {
-//                scanning = false;
-//                bluetoothLeScanner.stopScan(leScanCallback);
-//            }
-//        }
-//    }
-
 
     public void checkPermission() {
         if (Build.VERSION.SDK_INT >= 23) {
