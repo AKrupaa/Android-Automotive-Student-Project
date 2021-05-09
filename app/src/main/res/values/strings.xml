@@ -14,4 +14,7 @@
     <string name="forward">FORWARD</string>
     <string name="back">BACK</string>
     <string name="manual">MANUAL</string>
+    <string name="connect">connect</string>
+    <string name="disconnected">Disconnected</string>
+    <string name="connected">Connected</string>
 </resources>

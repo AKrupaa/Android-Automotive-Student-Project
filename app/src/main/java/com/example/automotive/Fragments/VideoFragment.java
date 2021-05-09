@@ -18,6 +18,7 @@ import android.widget.Toast;
 
 import com.example.automotive.Adapters.MyConnectionRecyclerViewAdapter;
 import com.example.automotive.EngineValuesPWM;
+import com.example.automotive.HexString;
 import com.example.automotive.R;
 import com.example.automotive.RxJavaBLE.RxJavaBLE;
 import com.example.automotive.SampleApplication;
@@ -28,6 +29,8 @@ import com.google.android.exoplayer2.SimpleExoPlayer;
 import com.google.android.exoplayer2.ui.PlayerView;
 import com.google.android.exoplayer2.util.Log;
 import com.google.android.exoplayer2.util.Util;
+import com.google.android.material.snackbar.Snackbar;
+import com.jakewharton.rx3.ReplayingShare;
 import com.polidea.rxandroidble2.RxBleClient;
 import com.polidea.rxandroidble2.RxBleConnection;
 import com.polidea.rxandroidble2.RxBleDevice;
@@ -39,6 +42,7 @@ import com.polidea.rxandroidble2.utils.StandardUUIDsParser;
 
 import io.github.controlwear.virtual.joystick.android.JoystickView;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
@@ -50,9 +54,12 @@ import butterknife.Unbinder;
 import io.reactivex.Observable;
 import io.reactivex.Single;
 import io.reactivex.disposables.Disposable;
+import io.reactivex.subjects.PublishSubject;
+import io.reactivex.disposables.CompositeDisposable;
 
 import static java.lang.Math.cos;
 import static java.lang.Math.sin;
+
 
 /**
  * A simple {@link Fragment} subclass.
@@ -92,19 +99,39 @@ public class VideoFragment extends Fragment {
 //    @BindView(R.id.manual_btn)
 //    Button manualButton;
 
+    @BindView(R.id.manualButton)
+    Button manualButton;
+
+    @BindView(R.id.connectButton)
+    Button connectButton;
+
+    @BindView(R.id.statusTextView)
+    TextView statusTextView;
+
     MyViewModel myViewModel;
     private String macAddress;
 
     private RxBleClient rxBleClient;
-    private RxBleDevice bleDevice;
+//    private RxBleDevice bleDevice;
 
+    private Observable<RxBleConnection> connectionObservable;
+    private PublishSubject<Boolean> disconnectTriggerSubject = PublishSubject.create();
     private Disposable connectionDisposable;
-    private Observable<RxBleConnection> rxBleConnectionObservable;
+    private final CompositeDisposable compositeDisposable = new CompositeDisposable();
 
+    private UUID uuid = UUID.fromString("00001235-0000-1000-8000-00805f9b34fb");
     List<BluetoothGattService> bluetoothGattServiceList;
     RxJavaBLE rxJavaBLE;
     Disposable subscribe;
+    RxBleDevice rxBleDevice;
     String BASE_UUID = "00000000-0000-1000-8000-00805F9B34FB";
+
+//    private Observable<RxBleConnection> prepareConnectionObservable() {
+//        return bleDevice
+//                .establishConnection(false)
+//                .takeUntil(disconnectTriggerSubject)
+//                .compose(ReplayingShare.instance());
+//    }
 
     public VideoFragment() {
         // Required empty public constructor
@@ -144,7 +171,6 @@ public class VideoFragment extends Fragment {
         View view = inflater.inflate(R.layout.fragment_video, container, false);
         unbinder = ButterKnife.bind(this, view);
         myViewModel = new ViewModelProvider(getActivity()).get(MyViewModel.class);
-        rxBleClient = SampleApplication.getRxBleClient(getActivity());
 //        rxJavaBLE = new RxJavaBLE(rxBleClient);
 
 //        rxJavaBLE.setMAC(MAC_ADDRESS);
@@ -155,7 +181,6 @@ public class VideoFragment extends Fragment {
 
 
 //        rxBleConnectionObservable = rxJavaBLE.prepareConnectionObservable();
-
 
 
 //        this.rxBleClient = SampleApplication.getRxBleClient(getActivity());
@@ -197,24 +222,96 @@ public class VideoFragment extends Fragment {
                 double engineLeft = engineValuesPWM.getnMotMixL();
                 double engineRight = engineValuesPWM.getnMotMixR();
 
-//                if (bleDevice == null)
-//                    bleDevice = rxBleClient.getBleDevice(MAC_ADDRESS);
+                Log.i("Engine left with sign:", Integer.toString((int) engineLeft));
+                Log.i("Engine right with sign", Integer.toString((int) engineRight));
 
-//                connectionDisposable = bleDevice.establishConnection(false).subscribe(rxBleConnection -> {
-//                   Log.i("connected", "connected");
-//                });
+                boolean negative_l = engineLeft < 0;
+                boolean negative_r = engineRight < 0;
 
-//                if (rxJavaBLE.isConnected()) {
-//                    rxJavaBLE.sendData("haha".toCharArray());
-//                }
+                int engineLeft_i;
+                int engineRight_i;
 
+                if (negative_l) {
+                    engineLeft_i = (int) -engineLeft;
+                } else {
+                    engineLeft_i = (int) engineLeft;
+                }
 
+                if (negative_r) {
+                    engineRight_i = (int) -engineRight;
+                } else {
+                    engineRight_i = (int) engineRight;
+                }
+
+                Log.i("Engine left:", Integer.toString(engineLeft_i));
+                Log.i("Engine right", Integer.toString(engineRight_i));
+
+                if (negative_l) {
+                    engineLeft_i += 128;
+                }
+                if (negative_r) {
+                    engineRight_i += 128;
+                }
+
+                String l = Integer.toHexString(engineLeft_i);
+
+                if (l.length() == 1) {
+                    l = "0" + l;
+                }
+
+                String r = Integer.toHexString(engineRight_i);
+                if (r.length() == 1) {
+                    r = "0" + r;
+                }
+                String movement = "0x03";
+                String data = movement + l + r;
+
+                Log.i("movement", data);
+
+                if (rxBleDevice != null) {
+//                    if (isConnected()) {
+                        final Disposable disposable = connectionObservable
+                                .firstOrError()
+                                .flatMap(rxBleConnection -> rxBleConnection.writeCharacteristic(uuid, HexString.hexToBytes(data)))
+                                .subscribe(
+                                        bytes -> onWriteSuccess(bytes),
+                                        throwable -> onWriteFailure(throwable)
+                                );
+                        compositeDisposable.add(disposable);
+//                    }
+                }
             }
-        }, 100);
+        }, 300);
 
 //        initializePlayer();
     }
 
+
+    @OnClick(R.id.connectButton)
+    void onConnectButton() {
+
+        if (rxBleDevice == null) {
+            if (myViewModel.getMacAddress().getValue() != null) {
+                if (!myViewModel.getMacAddress().getValue().isEmpty()) {
+
+                    // get BLE device
+                    rxBleDevice = SampleApplication.getRxBleClient(this.getActivity())
+                            .getBleDevice(myViewModel.getMacAddress().getValue());
+
+                    // establish connection
+                    connectionObservable = rxBleDevice.establishConnection(false)
+                            .takeUntil(disconnectTriggerSubject);
+
+                    statusTextView.setText(R.string.connected);
+                }
+
+            }
+        } else {
+            triggerDisconnect();
+            statusTextView.setText(R.string.disconnected);
+        }
+
+    }
 
     @Override
     public void onStart() {
@@ -331,13 +428,32 @@ public class VideoFragment extends Fragment {
 
 
     private boolean isConnected() {
-        return bleDevice.getConnectionState() == RxBleConnection.RxBleConnectionState.CONNECTED;
+        return rxBleDevice.getConnectionState() == RxBleConnection.RxBleConnectionState.CONNECTED;
     }
 
     private void triggerDisconnect() {
-
+        disconnectTriggerSubject.onNext(true);
         if (connectionDisposable != null) {
             connectionDisposable.dispose();
         }
+    }
+
+    private void onConnectionFailure(Throwable throwable) {
+        //noinspection ConstantConditions
+        Toast.makeText(getContext(), "Connection error: " + throwable, Toast.LENGTH_LONG).show();
+        Log.i(getClass().getSimpleName(), "Connection error: ", throwable);
+//        updateUI(null);
+    }
+
+    private void onWriteFailure(Throwable throwable) {
+        //noinspection ConstantConditions
+//        Snackbar.make(findViewById(R.id.main), "Write error: " + throwable, Snackbar.LENGTH_SHORT).show();
+        Log.i(getClass().getSimpleName(), "Write error: ", throwable);
+    }
+
+    private void onWriteSuccess(byte[] bytes) {
+        //noinspection ConstantConditions
+//        Snackbar.make(findViewById(R.id.main), "Write success", Snackbar.LENGTH_SHORT).show();
+        Log.i(getClass().getSimpleName(), "Wrote: " + bytes);
     }
 }
